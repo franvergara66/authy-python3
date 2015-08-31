@@ -19,7 +19,7 @@ class Resource(object):
         self.api_key = api_key
         self.def_headers = self.__default_headers()
 
-    def post(self, path, data = {}):
+    def post(self, path, data={}):
         return self.request("POST", path, data, {'Content-Type': 'application/json'})
 
     def get(self, path, data = {}):
@@ -28,19 +28,21 @@ class Resource(object):
     def put(self, path, data = {}):
         return self.request("PUT", path, data, {'Content-Type': 'application/json'})
 
-    def delete(self, path, data = {}):
+    def delete(self, path, data={}):
         return self.request("DELETE", path, data)
 
-    def request(self, method, path, data = {}, headers = {}):
+    def request(self, method, path, data={}, headers={}):
         url = self.api_uri + path
         params = {"api_key": self.api_key}
-        headers = dict(self.def_headers.items() + headers.items())
+        headers = self.def_headers.update(headers)
 
         if method == "GET":
             params.update(data)
-            return requests.request(method, url, headers=headers, params=params)
+            return requests.request(method, url, headers=headers,
+                                    params=params)
         else:
-            return requests.request(method, url, headers=headers, params=params, data=json.dumps(data))
+            return requests.request(method, url, headers=headers,
+                                    params=params, data=json.dumps(data))
 
     def __default_headers(self):
         return {
@@ -71,7 +73,7 @@ class Instance(object):
         errors = self.content
 
         if(not isinstance(errors, dict)):
-            errors = {"error": errors} # convert to dict for consistency
+            errors = {"error": errors}
         elif('errors' in errors):
             errors = errors['errors']
 
@@ -80,6 +82,7 @@ class Instance(object):
     def __getitem__(self, key):
         return self.content[key]
 
+
 class Sms(Instance):
     def ignored(self):
         try:
@@ -87,6 +90,7 @@ class Sms(Instance):
             return True
         except KeyError:
             return False
+
 
 class User(Instance):
     def __init__(self, resource, response):
@@ -98,7 +102,7 @@ class User(Instance):
 
 
 class Users(Resource):
-    def create(self, email, phone, country_code = 1):
+    def create(self, email, phone, country_code=1):
         data = {
             "user": {
                 "email": email,
@@ -111,7 +115,7 @@ class Users(Resource):
 
         return User(self, resp)
 
-    def request_sms(self, user_id, options = {}):
+    def request_sms(self, user_id, options={}):
         resp = self.get("/protected/json/sms/"+quote(str(user_id)), options)
 
         return Sms(self, resp)
@@ -126,29 +130,35 @@ class Users(Resource):
 
         return User(self, resp)
 
+
 class Token(Instance):
     def ok(self):
         if super(Token, self).ok():
-            return '"token":"is valid"' in self.response.content
+            return '"token":"is valid"' in str(self.response.content)
         return False
 
+
 class Tokens(Resource):
-    def verify(self, device_id, token, options = {}):
+    def verify(self, device_id, token, options={}):
         self.__validate(token, device_id)
         if 'force' not in options:
             options['force'] = "true"
-        resp = self.get("/protected/json/verify/"+quote(str(token))+"/"+quote(str(device_id)), options)
+        url = "/protected/json/verify/"
+        url += quote(str(token))+"/"+quote(str(device_id))
+        resp = self.get(url, options)
         return Token(self, resp)
 
     def __validate(self, token, device_id):
         self.__validate_digit(token, "Invalid Token. Only digits accepted.")
-        self.__validate_digit(device_id, "Invalid Authy id. Only digits accepted.")
+        self.__validate_digit(device_id,
+                              "Invalid Authy id. Only digits accepted.")
         length = len(token)
         if length < 6 or length > 10:
             raise AuthyFormatException("Invalid Token. Unexpected length.")
 
     def __validate_digit(self, var, message):
-        if not isinstance(var, (int, long)) and not var.isdigit():
+        # PEP 0237: Essentially, long renamed to int.
+        if not isinstance(var, int) and not var.isdigit():
             raise AuthyFormatException(message)
 
 
