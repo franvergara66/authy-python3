@@ -19,22 +19,30 @@ class Resource(object):
         self.api_key = api_key
         self.def_headers = self.__default_headers()
 
-    def post(self, path, data={}):
+    def post(self, path, data=None):
         return self.request("POST", path, data, {'Content-Type': 'application/json'})
 
-    def get(self, path, data = {}):
+    def get(self, path, data=None):
         return self.request("GET", path, data)
 
-    def put(self, path, data = {}):
+    def put(self, path, data=None):
         return self.request("PUT", path, data, {'Content-Type': 'application/json'})
 
-    def delete(self, path, data={}):
+    def delete(self, path, data=None):
         return self.request("DELETE", path, data)
 
-    def request(self, method, path, data={}, headers={}):
+    def request(self, method, path, data=None, req_headers=None):
+        if data is None:
+            data = {}
+
+        if req_headers is None:
+            req_headers = {}
+
         url = self.api_uri + path
         params = {"api_key": self.api_key}
-        headers = self.def_headers.update(headers)
+
+        headers = self.def_headers
+        headers.update(req_headers)
 
         if method == "GET":
             params.update(data)
