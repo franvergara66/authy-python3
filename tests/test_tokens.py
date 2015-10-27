@@ -22,27 +22,27 @@ class TokensTest(unittest.TestCase):
         try:
             token = self.resource.verify(user.id, 'token')
             self.fail()
-        except Exception, e:
+        except Exception as e:
             self.assertIsInstance(e, AuthyFormatException)
-            self.assertEqual(e.message, 'Invalid Token. Only digits accepted.')
+            self.assertEqual(str(e), 'Invalid Token. Only digits accepted.')
 
     def test_verify_digits_authy_id(self):
         user = self.users.create('test@example.com', '310-781-0860', 1)
         try:
             token = self.resource.verify('user.id', '0000000')
             self.fail()
-        except Exception, e:
+        except Exception as e:
             self.assertIsInstance(e, AuthyFormatException)
-            self.assertEqual(e.message, 'Invalid Authy id. Only digits accepted.')
+            self.assertEqual(str(e), 'Invalid Authy id. Only digits accepted.')
 
     def test_verify_longer_token(self):
         user = self.users.create('test@example.com', '310-781-0860', 1)
         try:
             token = self.resource.verify(user.id, '00000001111')
             self.fail()
-        except Exception, e:
+        except Exception as e:
             self.assertIsInstance(e, AuthyFormatException)
-            self.assertEqual(e.message, 'Invalid Token. Unexpected length.')
+            self.assertEqual(str(e), 'Invalid Token. Unexpected length.')
 
     def test_verify_invalid_token(self):
         user = self.users.create('test@example.com', '310-781-0860', 1)
