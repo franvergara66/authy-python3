@@ -6,7 +6,7 @@ class AuthyException(Exception):
     pass
 
 class AuthyFormatException(AuthyException):
-	pass
+    pass
 
 class AuthyApiException(AuthyException):
 
